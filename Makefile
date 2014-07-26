@@ -2,6 +2,6 @@
 PROJECTS = \
 testA \
 testB \
-estC
+testC
 
 include build/Common.mk
