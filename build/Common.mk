@@ -58,8 +58,10 @@ GLOBAL_LDFLAGS_EXE :=
 FINAL_OUT_DIR := $(CONFIG)-$(ARCH)
 
 define CREATE_MODULE
-$(1)_OBJECTS := $(addprefix $(1)/obj/,$$($(1)_SOURCES:%c=%o))
-$(1)_BINARY := $(addprefix $(1)/$(CONFIG)-$(ARCH)/,$(1))
+$(1)_CONFIG_DIR := $(1)/$(CONFIG)-$(ARCH)
+$(1)_OBJ_DIR := $$($(1)_CONFIG_DIR)/obj
+$(1)_OBJECTS := $(addprefix $$($(1)_OBJ_DIR)/,$$($(1)_SOURCES:%c=%o))
+$(1)_BINARY := $(addprefix $$($(1)_CONFIG_DIR)/,$(1))
 
 $(1)_FINAL_CFLAGS := $$($(1)_CFLAGS) $(GLOBAL_CFLAGS) $(GLOBAL_CFLAGS_$(2))
 $(1)_FINAL_LDFLAGS := $$($(1)_LDFLAGS) $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2))
@@ -70,6 +72,7 @@ $(1)_COPY: $$($(1)_BINARY)
 	cp $$($(1)_BINARY) $(FINAL_OUT_DIR)/$(1)
 
 $$($(1)_BINARY): $$($(1)_OBJECTS)
+	mkdir -p $$($(1)_OBJ_DIR)
 	$(CC) $$($(1)_FINAL_LDFLAGS) -o $$@ $$($(1)_OBJECTS) $(LIBS)
 
 $$($(1)_OBJECTS): $(addprefix $(1)/,$($(1)_SOURCES))
