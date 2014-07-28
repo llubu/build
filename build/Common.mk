@@ -25,7 +25,9 @@ CONFIG := release
 
 CONFIGURATIONS = release debug
 ifeq ($$(findstring $$(CONFIG),$$(CONFIGURATIONS)),)
-$(error "Building " $(CONFIG))
+$(error Error building $(CONFIG))
+else
+$(warning Configuration: $(CONFIG))
 endif
 
 ARCH_UNAME = $(shell uname -m)
@@ -35,21 +37,62 @@ else
 	ARCH := x86
 endif # $(ARCH_UNAME)
 
+GLOBAL_CFLAGS_COMMON := -fPIE -fstrict-aliasing -fstack-protector-all -fstrict-overflow
+GLOBAL_debug_CFLAGS := -Wall -Wextra -g -O0 -fno-omit-frame-pointer
+GLOBAL_release_CFLAGS := -Wall -Wextra -O4 -fomit-frame-pointer
+GLOBAL_CFLAGS := $(GLOBAL_CFLAGS_COMMON) $(GLOBAL_$(CONFIG)_CFLAGS)
+
+GLOBAL_CFLAGS_LIB :=
+GLOBAL_CFLAGS_ARC :=
+GLOBAL_CFLAGS_EXE :=
+
+GLOBAL_LDFLAGS_COMMON := -Wl,-rpath,\$$$$ORIGIN -pie
+GLOBAL_debug_LDFLAGS :=
+GLOBAL_release_LDFLAGS :=
+GLOBAL_LDFLAGS := $(GLOBAL_LDFLAGS_COMMON) $(GLOBAL_$(CONFIG)_LDFLAGS)
+
+GLOBAL_LDFLAGS_LIB := -shared -fvisibility=hidden
+GLOBAL_LDFLAGS_ARC := -static
+GLOBAL_LDFLAGS_EXE :=
+
+FINAL_OUT_DIR := $(CONFIG)-$(ARCH)
+
 define CREATE_MODULE
 $(1)_OBJECTS := $(addprefix $(1)/obj/,$$($(1)_SOURCES:%c=%o))
 $(1)_BINARY := $(addprefix $(1)/$(CONFIG)-$(ARCH)/,$(1))
+
+$(1)_FINAL_CFLAGS := $$($(1)_CFLAGS) $(GLOBAL_CFLAGS) $(GLOBAL_CFLAGS_$(2))
+$(1)_FINAL_LDFLAGS := $$($(1)_LDFLAGS) $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2))
+
+$(1)_COPY: $$($(1)_BINARY)
+	@echo "Copying " $$($(1)_BINARY) $(FINAL_OUT_DIR)
+	mkdir -p $(FINAL_OUT_DIR)
+	cp $$($(1)_BINARY) $(FINAL_OUT_DIR)/$(1)
+
 $$($(1)_BINARY): $$($(1)_OBJECTS)
+	$(CC) $$($(1)_FINAL_LDFLAGS) -o $$@ $$($(1)_OBJECTS) $(LIBS)
 
 $$($(1)_OBJECTS): $(addprefix $(1)/,$($(1)_SOURCES))
+	@echo Compiling $($(1)_SOURCES) $(GLOBAL_CFLAGS)
+	$(CC) $$($(1)_FINAL_CFLAGS) -c $$< -o $$@
 
-MODULES += $$($(1)_BINARY)
+$(1)_CLEAN:
+	rm -f $$($(1)_OBJECTS)
+	rm -f $$($(1)_BINARY)
+	rm -f $(FINAL_OUT_DIR)/$(1)
 
+MODULES += $(1)_COPY
+MODULES_CLEAN += $(1)_CLEAN
 endef # CREATE_MODULE
 
 include $(addsuffix /Module.mk,$(PROJECTS))
 
-$(warning MODULES: $(MODULES))
-
 .PHONY: all
 all: $(MODULES)
+	@echo Making $(MODULES)
+
+.PHONY: clean
+clean: $(MODULES_CLEAN)
+	@echo Cleaning $(MODULES_CLEAN)
+
 
