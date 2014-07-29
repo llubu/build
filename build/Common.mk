@@ -72,11 +72,11 @@ $(1)_COPY: $$($(1)_BINARY)
 	cp $$($(1)_BINARY) $(FINAL_OUT_DIR)/$(1)
 
 $$($(1)_BINARY): $$($(1)_OBJECTS)
-	mkdir -p $$($(1)_OBJ_DIR)
 	$(CC) $$($(1)_FINAL_LDFLAGS) -o $$@ $$($(1)_OBJECTS) $(LIBS)
 
 $$($(1)_OBJECTS): $(addprefix $(1)/,$($(1)_SOURCES))
 	@echo Compiling $($(1)_SOURCES) $(GLOBAL_CFLAGS)
+	mkdir -p $$($(1)_OBJ_DIR)
 	$(CC) $$($(1)_FINAL_CFLAGS) -c $$< -o $$@
 
 $(1)_CLEAN:
