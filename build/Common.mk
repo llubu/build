@@ -37,23 +37,27 @@ else
 	ARCH := x86
 endif # $(ARCH_UNAME)
 
-GLOBAL_CFLAGS_COMMON := -fPIE -fstrict-aliasing -fstack-protector-all -fstrict-overflow
+GLOBAL_CFLAGS_COMMON := -fstrict-aliasing -fstack-protector-all -fstrict-overflow
 GLOBAL_debug_CFLAGS := -Wall -Wextra -g -O0 -fno-omit-frame-pointer
 GLOBAL_release_CFLAGS := -Wall -Wextra -O4 -fomit-frame-pointer
 GLOBAL_CFLAGS := $(GLOBAL_CFLAGS_COMMON) $(GLOBAL_$(CONFIG)_CFLAGS)
 
-GLOBAL_CFLAGS_LIB :=
-GLOBAL_CFLAGS_ARC :=
-GLOBAL_CFLAGS_EXE :=
+GLOBAL_CFLAGS_LIB := -fPIC
+GLOBAL_CFLAGS_ARC := -fPIC
+GLOBAL_CFLAGS_EXE := -fPIE
 
-GLOBAL_LDFLAGS_COMMON := -Wl,-rpath,\$$$$ORIGIN -pie
+GLOBAL_LDFLAGS_COMMON :=
 GLOBAL_debug_LDFLAGS :=
 GLOBAL_release_LDFLAGS :=
 GLOBAL_LDFLAGS := $(GLOBAL_LDFLAGS_COMMON) $(GLOBAL_$(CONFIG)_LDFLAGS)
 
-GLOBAL_LDFLAGS_LIB := -shared -fvisibility=hidden
-GLOBAL_LDFLAGS_ARC := -static
-GLOBAL_LDFLAGS_EXE :=
+GLOBAL_LDFLAGS_LIB := -shared -fvisibility=hidden -Wl,-rpath,\$$$$ORIGIN
+GLOBAL_LDFLAGS_ARC := -r -c
+GLOBAL_LDFLAGS_EXE := -Wl,-rpath,\$$$$ORIGIN -pie
+
+LIB_SUFFIX := .so
+ARC_SUFFIX := .a
+EXE_SUFFIX :=
 
 FINAL_OUT_DIR := $(CONFIG)-$(ARCH)
 
@@ -61,28 +65,38 @@ define CREATE_MODULE
 $(1)_CONFIG_DIR := $(1)/$(CONFIG)-$(ARCH)
 $(1)_OBJ_DIR := $$($(1)_CONFIG_DIR)/obj
 $(1)_OBJECTS := $(addprefix $$($(1)_OBJ_DIR)/,$$($(1)_SOURCES:%c=%o))
-$(1)_BINARY := $(addprefix $$($(1)_CONFIG_DIR)/,$(1))
+$(1)_BINARY_FILENAME := $(addsuffix $$($(2)_SUFFIX),$(1))
+$(1)_BINARY := $(addprefix $$($(1)_CONFIG_DIR)/,$$($(1)_BINARY_FILENAME))
+
+$(1)_DEPENDS_BINARIES := $(addsuffix _COPY,$($(1)_DEPENDS)) $(addsuffix _COPY,$($(1)_DEPENDS_LINK))
+$(1)_DEPENDS_HEADERS := $(addsuffix _HEADERS,$($(1)_DEPENDS)) $(addsuffix _HEADERS,$($(1)_DEPENDS_INCLUDE))
+$(1)_HEADER_DIRS += -I. $(addprefix -I,$($(1)_DEPENDS)) $(addsuffix _HEADERS,$($(1)_DEPENDS_INCLUDE))
+$(1)_LIBS += $($(1)_DEPENDS_BINARIES)
 
 $(1)_FINAL_CFLAGS := $$($(1)_CFLAGS) $(GLOBAL_CFLAGS) $(GLOBAL_CFLAGS_$(2))
 $(1)_FINAL_LDFLAGS := $$($(1)_LDFLAGS) $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2))
 
 $(1)_COPY: $$($(1)_BINARY)
-	@echo "Copying " $$($(1)_BINARY) $(FINAL_OUT_DIR)
 	mkdir -p $(FINAL_OUT_DIR)
-	cp $$($(1)_BINARY) $(FINAL_OUT_DIR)/$(1)
+	cp $$($(1)_BINARY) $(FINAL_OUT_DIR)/$($(1)_BINARY_FILENAME)
 
+ifeq ($(2),$(filter EXE LIB,$(2)))
+$$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_BINARIES)
+	@echo LIBS:$($(1)_LIBS)
+	$(CC) -o $$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$($(1)_LIBS)
+else ifeq ($(2),ARC)
 $$($(1)_BINARY): $$($(1)_OBJECTS)
-	$(CC) $$($(1)_FINAL_LDFLAGS) -o $$@ $$($(1)_OBJECTS) $(LIBS)
+	$(AR) $$($(1)_FINAL_LDFLAGS) -o $$@ $$($(1)_OBJECTS)
+endif # EXE
 
-$$($(1)_OBJECTS): $(addprefix $(1)/,$($(1)_SOURCES))
-	@echo Compiling $($(1)_SOURCES) $(GLOBAL_CFLAGS)
+$$($(1)_OBJECTS): $(addprefix $(1)/,$($(1)_SOURCES)) $($(1)_DEPENDS_HEADERS)
 	mkdir -p $$($(1)_OBJ_DIR)
-	$(CC) $$($(1)_FINAL_CFLAGS) -c $$< -o $$@
+	$(CC) -c $$< -o $$@ $$($(1)_FINAL_CFLAGS) $$($(1)_HEADER_DIRS)
 
 $(1)_CLEAN:
-	rm -f $$($(1)_OBJECTS)
-	rm -f $$($(1)_BINARY)
-	rm -f $(FINAL_OUT_DIR)/$(1)
+	-rm -f $$($(1)_OBJECTS)
+	-rm -f $$($(1)_BINARY)
+	-rm -f $(FINAL_OUT_DIR)/$$($(1)_BINARY_FILENAME)
 
 MODULES += $(1)_COPY
 MODULES_CLEAN += $(1)_CLEAN
@@ -90,12 +104,7 @@ endef # CREATE_MODULE
 
 include $(addsuffix /Module.mk,$(PROJECTS))
 
-.PHONY: all
-all: $(MODULES)
-	@echo Making $(MODULES)
-
 .PHONY: clean
 clean: $(MODULES_CLEAN)
 	@echo Cleaning $(MODULES_CLEAN)
-
 

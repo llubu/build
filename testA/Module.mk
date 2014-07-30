@@ -23,5 +23,9 @@
 testA_HEADERS := testA.h
 testA_SOURCES := testA.c
 
+testA_DEPENDS_INCLUDE :=
+testA_DEPENDS_LINK :=
+testA_DEPENDS := testB testC
+
 $(eval $(call CREATE_MODULE,testA,EXE))
 
