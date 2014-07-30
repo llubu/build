@@ -51,9 +51,9 @@ GLOBAL_debug_LDFLAGS :=
 GLOBAL_release_LDFLAGS :=
 GLOBAL_LDFLAGS := $(GLOBAL_LDFLAGS_COMMON) $(GLOBAL_$(CONFIG)_LDFLAGS)
 
-GLOBAL_LDFLAGS_LIB := -shared -fvisibility=hidden -Wl,-rpath,\$$$$ORIGIN
+GLOBAL_LDFLAGS_LIB := -shared -fvisibility=hidden -Wl,-rpath,\$$$$$$$$ORIGIN
 GLOBAL_LDFLAGS_ARC := -r -c
-GLOBAL_LDFLAGS_EXE := -Wl,-rpath,\$$$$ORIGIN -pie
+GLOBAL_LDFLAGS_EXE := -Wl,-rpath,\$$$$$$$$ORIGIN -pie
 
 LIB_SUFFIX := .so
 ARC_SUFFIX := .a
@@ -85,16 +85,15 @@ $$($(1)_COPY): $$($(1)_BINARY)
 	mkdir -p $(FINAL_OUT_DIR)
 	cp $$($(1)_BINARY) $$($(1)_COPY)
 
-.PHONY: $(1)
-$(1): $$($(1)_COPY)
-
+define $(1)_CREATE_BINARY_RULE
 ifeq ($(2),$(filter EXE LIB,$(2)))
-$$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS) $$($(1)_DEPENDS_LINK)
-	$(CC) -o $$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$($(1)_LIBS)
+$$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS)
+	$(CC) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$($(1)_LIBS)
 else ifeq ($(2),ARC)
 $$($(1)_BINARY): $$($(1)_OBJECTS)
-	$(AR) $$($(1)_FINAL_LDFLAGS) -o $$@ $$($(1)_OBJECTS)
+	$(AR) $$($(1)_FINAL_LDFLAGS) -o $$$$@ $$($(1)_OBJECTS)
 endif # EXE
+endef # $(1)_CREATE_BINARY_RULE
 
 $$($(1)_OBJECTS): $(addprefix $(1)/,$($(1)_SOURCES)) $($(1)_DEPENDS_HEADERS)
 	mkdir -p $$($(1)_OBJ_DIR)
@@ -112,6 +111,7 @@ endef # CREATE_MODULE
 include $(addsuffix /Module.mk,$(PROJECTS))
 
 $(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
+$(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_BINARY_RULE,$(MODULE))))
 
 .PHONY: all
 all: $(MODULES)
