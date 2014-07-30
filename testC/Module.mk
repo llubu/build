@@ -23,5 +23,7 @@
 testC_HEADERS := testC.h
 testC_SOURCES := testC.c
 
+testC_CFLAGS := -DTESTC_EXPORTS
+
 $(eval $(call CREATE_MODULE,testC,ARC))
 
