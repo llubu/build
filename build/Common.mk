@@ -61,6 +61,14 @@ EXE_SUFFIX :=
 
 FINAL_OUT_DIR := $(CONFIG)-$(ARCH)
 
+define CREATE_MODULE_VARIABLES
+$(warning DEPENDS_LIB_RULES:$$($(1)_DEPENDS_LIB_RULES))
+$(1)_DEPENDS_LIBS := $$($(1)_DEPENDS_LIB_RULES)
+$(1)_LIBS += $$($(1)_DEPENDS_LIBS)
+$(warning DEPENDS_LIBS:$$($(1)_DEPENDS_LIBS))
+
+endef # CREATE_MODULE_VARIABLES
+
 define CREATE_MODULE
 $(1)_CONFIG_DIR := $(1)/$(CONFIG)-$(ARCH)
 $(1)_OBJ_DIR := $$($(1)_CONFIG_DIR)/obj
@@ -76,13 +84,14 @@ $(1)_LIBS += $($(1)_DEPENDS_BINARIES)
 $(1)_FINAL_CFLAGS := $$($(1)_CFLAGS) $(GLOBAL_CFLAGS) $(GLOBAL_CFLAGS_$(2))
 $(1)_FINAL_LDFLAGS := $$($(1)_LDFLAGS) $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2))
 
-$(1)_COPY: $$($(1)_BINARY)
+$$($(1)_COPY): $$($(1)_BINARY)
+	@echo COPY:$$($(1)_COPY)
 	mkdir -p $(FINAL_OUT_DIR)
 	cp $$($(1)_BINARY) $(FINAL_OUT_DIR)/$($(1)_BINARY_FILENAME)
 
 ifeq ($(2),$(filter EXE LIB,$(2)))
-$$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_BINARIES)
-	@echo LIBS:$($(1)_LIBS)
+$$($(1)_BINARY): $$($(1)_OBJECTS)
+	@echo HELLO $$($(1)_DEPENDS_LIBS)
 	$(CC) -o $$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$($(1)_LIBS)
 else ifeq ($(2),ARC)
 $$($(1)_BINARY): $$($(1)_OBJECTS)
@@ -93,18 +102,25 @@ $$($(1)_OBJECTS): $(addprefix $(1)/,$($(1)_SOURCES)) $($(1)_DEPENDS_HEADERS)
 	mkdir -p $$($(1)_OBJ_DIR)
 	$(CC) -c $$< -o $$@ $$($(1)_FINAL_CFLAGS) $$($(1)_HEADER_DIRS)
 
+.PHONY: $(1)
+$(1): $$($(1)_COPY)
+
 $(1)_CLEAN:
 	-rm -f $$($(1)_OBJECTS)
 	-rm -f $$($(1)_BINARY)
 	-rm -f $(FINAL_OUT_DIR)/$$($(1)_BINARY_FILENAME)
 
-MODULES += $(1)_COPY
+MODULES += $(1)
 MODULES_CLEAN += $(1)_CLEAN
 endef # CREATE_MODULE
 
 include $(addsuffix /Module.mk,$(PROJECTS))
 
+$(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
+
+.PHONY: all
+all: $(MODULES)
+
 .PHONY: clean
 clean: $(MODULES_CLEAN)
 	@echo Cleaning $(MODULES_CLEAN)
-
