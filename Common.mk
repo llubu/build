@@ -123,11 +123,9 @@ include $(addsuffix /Module.mk,$(PROJECTS))
 $(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
 $(foreach MODULE,$(MODULES),$(eval $(call CREATE_RECURSIVE_DEPENDS,$(MODULE))))
 $(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_RULES,$(MODULE))))
-$(warning SUB:$(testA_SUBDEPS))
 
 .PHONY: all
 all: $(MODULES)
 
 .PHONY: clean
 clean: $(MODULES_CLEAN)
-	@echo Cleaning $(MODULES_CLEAN)
