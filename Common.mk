@@ -61,10 +61,20 @@ EXE_SUFFIX :=
 
 FINAL_OUT_DIR := $(CONFIG)-$(ARCH)
 
+define CREATE_RECURSIVE_DEPENDS
+$(1)_DEPENDS_LIBS += $(foreach LIB,$$($(1)_DEPENDS),$($($(LIB)_DEPENDS_LIBS)))
+$(1)_DEPENDS_LIBS += $(foreach LIB,$$($(1)_DEPENDS_LINK),$($($(LIB)_DEPENDS_LIBS)))
+$(1)_DEPENDS_LIBS := $(sort $$($(1)_DEPENDS_LIBS))
+
+$(1)_LIBS += $(foreach LIB,$($(1)_DEPENDS),$($(LIB)_LIBS))
+$(1)_LIBS += $(foreach LIB,$($(1)_DEPENDS_LINK),$($(LIB)_LIBS))
+$(1)_LIBS := $(sort $$($(1)_LIBS))
+endef # CREATE_RECURSIVE_DEPENDS
+
 define CREATE_MODULE_VARIABLES
 $(1)_DEPENDS_LIBS := $(foreach LIB,$($(1)_DEPENDS_LIB_RULES),$($(LIB)))
-$(1)_DEPENDS_HEADERS := $(foreach HEADER_RULE,$($(1)_DEPENDS),$(foreach HEADER,$($(HEADER_RULE)_HEADERS),$(HEADER_RULE)/$(HEADER)))
 $(1)_LIBS += $$($(1)_DEPENDS_LIBS)
+$(1)_DEPENDS_HEADERS := $(foreach HEADER_RULE,$($(1)_DEPENDS),$(foreach HEADER,$($(HEADER_RULE)_HEADERS),$(HEADER_RULE)/$(HEADER)))
 endef # CREATE_MODULE_VARIABLES
 
 define CREATE_MODULE
@@ -111,7 +121,9 @@ endef # CREATE_MODULE
 include $(addsuffix /Module.mk,$(PROJECTS))
 
 $(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
+$(foreach MODULE,$(MODULES),$(eval $(call CREATE_RECURSIVE_DEPENDS,$(MODULE))))
 $(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_RULES,$(MODULE))))
+$(warning SUB:$(testA_SUBDEPS))
 
 .PHONY: all
 all: $(MODULES)
