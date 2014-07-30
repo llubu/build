@@ -20,10 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-PROJECTS = \
-testA \
-testB \
-testC \
-testD
+testD_HEADERS := testD.h
+testD_SOURCES := testD.c
 
-include build/Common.mk
+testD_CFLAGS := -DTESTD_EXPORTS
+
+$(eval $(call CREATE_MODULE,testD,LIB))
+
