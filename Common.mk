@@ -63,6 +63,7 @@ FINAL_OUT_DIR := $(CONFIG)-$(ARCH)
 
 define CREATE_MODULE_VARIABLES
 $(1)_DEPENDS_LIBS := $(foreach LIB,$($(1)_DEPENDS_LIB_RULES),$($(LIB)))
+$(1)_DEPENDS_HEADERS := $(foreach HEADER_RULE,$($(1)_DEPENDS),$(foreach HEADER,$($(HEADER_RULE)_HEADERS),$(HEADER_RULE)/$(HEADER)))
 $(1)_LIBS += $$($(1)_DEPENDS_LIBS)
 endef # CREATE_MODULE_VARIABLES
 
@@ -75,8 +76,7 @@ $(1)_BINARY := $(addprefix $$($(1)_CONFIG_DIR)/,$$($(1)_BINARY_FILENAME))
 $(1)_COPY := $(FINAL_OUT_DIR)/$$($(1)_BINARY_FILENAME)
 
 $(1)_DEPENDS_LIB_RULES := $(addsuffix _COPY,$($(1)_DEPENDS)) $(addsuffix _COPY,$($(1)_DEPENDS_LINK))
-$(1)_DEPENDS_HEADERS := $(addsuffix _HEADERS,$($(1)_DEPENDS)) $(addsuffix _HEADERS,$($(1)_DEPENDS_INCLUDE))
-$(1)_HEADER_DIRS += -I. $(addprefix -I,$($(1)_DEPENDS)) $(addsuffix _HEADERS,$($(1)_DEPENDS_INCLUDE))
+$(1)_HEADER_DIRS += -I$(1) $(addprefix -I,$($(1)_DEPENDS)) $(addsuffix _HEADERS,$($(1)_DEPENDS_INCLUDE))
 
 $(1)_FINAL_CFLAGS := $$($(1)_CFLAGS) $(GLOBAL_CFLAGS) $(GLOBAL_CFLAGS_$(2))
 $(1)_FINAL_LDFLAGS := $$($(1)_LDFLAGS) $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2))
@@ -85,7 +85,7 @@ $$($(1)_COPY): $$($(1)_BINARY)
 	mkdir -p $(FINAL_OUT_DIR)
 	cp $$($(1)_BINARY) $$($(1)_COPY)
 
-define $(1)_CREATE_BINARY_RULE
+define $(1)_CREATE_RULES
 ifeq ($(2),$(filter EXE LIB,$(2)))
 $$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS)
 	$(CC) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$($(1)_LIBS)
@@ -93,16 +93,16 @@ else ifeq ($(2),ARC)
 $$($(1)_BINARY): $$($(1)_OBJECTS)
 	$(AR) $$($(1)_FINAL_LDFLAGS) -o $$$$@ $$($(1)_OBJECTS)
 endif # EXE
-endef # $(1)_CREATE_BINARY_RULE
 
-$$($(1)_OBJECTS): $(addprefix $(1)/,$($(1)_SOURCES)) $($(1)_DEPENDS_HEADERS)
+$$($(1)_OBJECTS): $(addprefix $(1)/,$($(1)_SOURCES)) $$($(1)_DEPENDS_HEADERS)
 	mkdir -p $$($(1)_OBJ_DIR)
-	$(CC) -c $$< -o $$@ $$($(1)_FINAL_CFLAGS) $$($(1)_HEADER_DIRS)
+	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$($(1)_HEADER_DIRS)
 
 $(1)_CLEAN:
 	-rm -f $$($(1)_OBJECTS)
 	-rm -f $$($(1)_BINARY)
 	-rm -f $(FINAL_OUT_DIR)/$$($(1)_BINARY_FILENAME)
+endef # $(1)_CREATE_RULES
 
 MODULES += $(1)
 MODULES_CLEAN += $(1)_CLEAN
@@ -111,7 +111,7 @@ endef # CREATE_MODULE
 include $(addsuffix /Module.mk,$(PROJECTS))
 
 $(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
-$(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_BINARY_RULE,$(MODULE))))
+$(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_RULES,$(MODULE))))
 
 .PHONY: all
 all: $(MODULES)
