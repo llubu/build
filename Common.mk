@@ -128,7 +128,6 @@ include $(addsuffix /Module.mk,$(PROJECTS))
 $(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
 $(foreach MODULE,$(MODULES),$(eval $(call CREATE_RECURSIVE_DEPENDS,$(MODULE))))
 $(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_BINARY_RULES,$(MODULE))))
-$(warning testE_SOURCES $(testE_SOURCES) $(testE_OBJECTS))
 $(foreach MODULE,$(MODULES),$(foreach SOURCE,$($(MODULE)_SOURCES),$(eval $(call $(MODULE)_CREATE_SOURCE_RULES,$(SOURCE)))))
 
 .PHONY: all
