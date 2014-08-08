@@ -58,6 +58,7 @@ GLOBAL_LDFLAGS_EXE := -Wl,-rpath,\$$$$$$$$ORIGIN -pie
 LIB_SUFFIX := .so
 ARC_SUFFIX := .a
 EXE_SUFFIX :=
+DRV_SUFFIX := .ko
 
 FINAL_OUT_DIR := $(CONFIG)-$(ARCH)
 
@@ -88,7 +89,7 @@ $(1)_BINARY := $(addprefix $$($(1)_CONFIG_DIR)/,$$($(1)_BINARY_FILENAME))
 $(1)_COPY := $(FINAL_OUT_DIR)/$$($(1)_BINARY_FILENAME)
 
 $(1)_DEPENDS_LIB_RULES := $(addsuffix _COPY,$($(1)_DEPENDS)) $(addsuffix _COPY,$($(1)_DEPENDS_LINK))
-$(1)_HEADER_DIRS += -I$(1) $(addprefix -I,$($(1)_DEPENDS)) $(addsuffix _HEADERS,$($(1)_DEPENDS_INCLUDE))
+$(1)_HEADER_DIRS += -I$$($(1)_DIR) $(foreach HEADER_DIR_PROJ,$($(1)_DEPENDS) $($(1)_DEPENDS_INCLUDE),-I$$($(HEADER_DIR_PROJ)_DIR))
 
 $(1)_FINAL_CFLAGS := $$($(1)_CFLAGS) $(GLOBAL_CFLAGS) $(GLOBAL_CFLAGS_$(2))
 $(1)_FINAL_LDFLAGS := $$($(1)_LDFLAGS) $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2))
@@ -98,6 +99,7 @@ $$($(1)_COPY): $$($(1)_BINARY)
 	cp $$($(1)_BINARY) $$($(1)_COPY)
 
 define $(1)_CREATE_BINARY_RULES
+$$(eval $(call $(1)_BINARY_RULES))
 ifeq ($(2),$(filter EXE LIB,$(2)))
 $$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS)
 	$(CC) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$($(1)_LIBS)
@@ -106,6 +108,9 @@ $$($(1)_BINARY): $$($(1)_OBJECTS)
 	$(AR) $$($(1)_FINAL_LDFLAGS) -o $$$$@ $$($(1)_OBJECTS)
 endif # EXE
 
+.PHONY: $(1)
+$(1): $$($(1)_BINARY)
+
 $(1)_CLEAN:
 	-rm -f $$($(1)_OBJECTS)
 	-rm -f $$($(1)_BINARY)
@@ -113,25 +118,30 @@ $(1)_CLEAN:
 endef # $(1)_CREATE_BINARY_RULES
 
 define $(1)_CREATE_SOURCE_RULES
+ifeq ($(2),$(filter EXE LIB ARC,$(2)))
 $$($(1)_OBJ_DIR)/$$(1:%.c=%.o): $$($(1)_DIR)$$(1) $$($(1)_DEPENDS_HEADERS)
-	echo OBJRULE $$$$< $$$$@ $$($(1)_OBJ_DIR) $$($(1)_DIR)$(1)
 	mkdir -p $$($(1)_OBJ_DIR)
 	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$($(1)_HEADER_DIRS)
+endif # EXE LIB ARC
 endef # CREATE_SOURCE_RULES
 
 MODULES += $(1)
 MODULES_CLEAN += $(1)_CLEAN
+
 endef # CREATE_MODULE
 
 include $(addsuffix /Module.mk,$(PROJECTS))
-
-$(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
-$(foreach MODULE,$(MODULES),$(eval $(call CREATE_RECURSIVE_DEPENDS,$(MODULE))))
-$(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_BINARY_RULES,$(MODULE))))
-$(foreach MODULE,$(MODULES),$(foreach SOURCE,$($(MODULE)_SOURCES),$(eval $(call $(MODULE)_CREATE_SOURCE_RULES,$(SOURCE)))))
 
 .PHONY: all
 all: $(MODULES)
 
 .PHONY: clean
 clean: $(MODULES_CLEAN)
+
+.DEFAULT_GOAL := all
+
+$(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
+$(foreach MODULE,$(MODULES),$(eval $(call CREATE_RECURSIVE_DEPENDS,$(MODULE))))
+$(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_BINARY_RULES,$(MODULE))))
+$(foreach MODULE,$(MODULES),$(foreach SOURCE,$($(MODULE)_SOURCES),$(eval $(call $(MODULE)_CREATE_SOURCE_RULES,$(SOURCE)))))
+
