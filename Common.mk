@@ -82,7 +82,7 @@ define CREATE_MODULE
 $(1)_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 $(1)_CONFIG_DIR := $$($(1)_DIR)$(CONFIG)-$(ARCH)
 $(1)_OBJ_DIR := $$($(1)_CONFIG_DIR)/obj
-$(1)_OBJ_FILES := $$($(1)_SOURCES:%c=%o)
+$(1)_OBJ_FILES := $$(notdir $$($(1)_SOURCES:%c=%o))
 $(1)_OBJECTS := $$(addprefix $$($(1)_OBJ_DIR)/,$$($(1)_OBJ_FILES))
 $(1)_BINARY_FILENAME := $(addsuffix $$($(2)_SUFFIX),$(1))
 $(1)_BINARY := $(addprefix $$($(1)_CONFIG_DIR)/,$$($(1)_BINARY_FILENAME))
@@ -119,7 +119,7 @@ endef # $(1)_CREATE_BINARY_RULES
 
 define $(1)_CREATE_SOURCE_RULES
 ifeq ($(2),$(filter EXE LIB ARC,$(2)))
-$$($(1)_OBJ_DIR)/$$(1:%.c=%.o): $$($(1)_DIR)$$(1) $$($(1)_DEPENDS_HEADERS)
+$$($(1)_OBJ_DIR)/$$(notdir $$(1:%.c=%.o)): $$(abspath $$($(1)_DIR)$$(1)) $$($(1)_DEPENDS_HEADERS)
 	mkdir -p $$($(1)_OBJ_DIR)
 	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$($(1)_HEADER_DIRS)
 endif # EXE LIB ARC
