@@ -109,7 +109,7 @@ $$($(1)_BINARY): $$($(1)_OBJECTS)
 endif # EXE
 
 .PHONY: $(1)
-$(1): $$($(1)_BINARY)
+$(1): $$($(1)_COPY)
 
 $(1)_CLEAN:
 	-rm -f $$($(1)_OBJECTS)
