@@ -79,6 +79,7 @@ $(1)_DEPENDS_HEADERS := $(foreach HEADER_RULE,$($(1)_DEPENDS),$(foreach HEADER,$
 endef # CREATE_MODULE_VARIABLES
 
 define CREATE_MODULE
+$(1)_TYPE := $(2)
 $(1)_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 $(1)_CONFIG_DIR := $$($(1)_DIR)$(CONFIG)-$(ARCH)
 $(1)_OBJ_DIR := $$($(1)_CONFIG_DIR)/obj
@@ -115,6 +116,12 @@ $(1)_CLEAN:
 	-rm -f $$($(1)_OBJECTS)
 	-rm -f $$($(1)_BINARY)
 	-rm -f $(FINAL_OUT_DIR)/$$($(1)_BINARY_FILENAME)
+
+$(1)_RUN: $$($(1)_COPY)
+ifeq ($(2),EXE)
+	$$($(1)_COPY)
+endif # EXE
+
 endef # $(1)_CREATE_BINARY_RULES
 
 define $(1)_CREATE_SOURCE_RULES
@@ -132,16 +139,36 @@ endef # CREATE_SOURCE_RULES
 MODULES += $(1)
 MODULES_CLEAN += $(1)_CLEAN
 
+ifneq ($(filter $(MAKECMDGOALS),test clean-test run-test),)
+ifeq ($(TESTS_READY),1)
+TEST_MODULES += $(1)
+TEST_MODULES_CLEAN += $(1)_CLEAN
+TEST_MODULES_RUN += $(1)_RUN
+endif # TESTS_READY
+
+endif # MAKECMDGOALS
 endef # CREATE_MODULE
 
 include $(addsuffix /Module.mk,$(PROJECTS))
 
-ifneq ($(filter $(MAKECMDGOALS),test clean),)
+ifneq ($(filter $(MAKECMDGOALS),test clean clean-test run-test),)
+TESTS_READY := 1
 include $(addsuffix /Module.mk,$(TEST_PROJECTS))
 endif # MAKECMDGOALS,test
 
+$(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
+$(foreach MODULE,$(MODULES),$(eval $(call CREATE_RECURSIVE_DEPENDS,$(MODULE))))
+$(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_BINARY_RULES,$(MODULE))))
+$(foreach MODULE,$(MODULES),$(foreach SOURCE,$($(MODULE)_SOURCES),$(eval $(call $(MODULE)_CREATE_SOURCE_RULES,$(SOURCE)))))
+
 .PHONY: test
 test: $(MODULES)
+
+.PHONY: clean-test
+clean-test: $(TEST_MODULES_CLEAN)
+
+.PHONY: run-test
+run-test: $(TEST_MODULES_RUN)
 
 .PHONY: all
 all: $(MODULES)
@@ -150,10 +177,5 @@ all: $(MODULES)
 clean: $(MODULES_CLEAN)
 
 .DEFAULT_GOAL := all
-
-$(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
-$(foreach MODULE,$(MODULES),$(eval $(call CREATE_RECURSIVE_DEPENDS,$(MODULE))))
-$(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_BINARY_RULES,$(MODULE))))
-$(foreach MODULE,$(MODULES),$(foreach SOURCE,$($(MODULE)_SOURCES),$(eval $(call $(MODULE)_CREATE_SOURCE_RULES,$(SOURCE)))))
 
 
