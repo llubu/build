@@ -42,7 +42,7 @@ GLOBAL_debug_CFLAGS := -Wall -Wextra -g -O0 -fno-omit-frame-pointer
 GLOBAL_release_CFLAGS := -Wall -Wextra -O4 -fomit-frame-pointer
 GLOBAL_CFLAGS := $(GLOBAL_CFLAGS_COMMON) $(GLOBAL_$(CONFIG)_CFLAGS)
 
-GLOBAL_CFLAGS_LIB := -fPIC
+GLOBAL_CFLAGS_LIB := -fPIC -fvisibility=hidden
 GLOBAL_CFLAGS_ARC := -fPIC
 GLOBAL_CFLAGS_EXE := -fPIE
 
@@ -51,7 +51,7 @@ GLOBAL_debug_LDFLAGS :=
 GLOBAL_release_LDFLAGS :=
 GLOBAL_LDFLAGS := $(GLOBAL_LDFLAGS_COMMON) $(GLOBAL_$(CONFIG)_LDFLAGS)
 
-GLOBAL_LDFLAGS_LIB := -shared -fvisibility=hidden -Wl,-rpath,\$$$$$$$$ORIGIN
+GLOBAL_LDFLAGS_LIB := -shared -Wl,-rpath,\$$$$$$$$ORIGIN
 GLOBAL_LDFLAGS_ARC := -r -c
 GLOBAL_LDFLAGS_EXE := -Wl,-rpath,\$$$$$$$$ORIGIN -pie
 
