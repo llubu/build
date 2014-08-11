@@ -131,7 +131,7 @@ $$($(1)_OBJ_DIR)/$$(basename $$(notdir $$(1))).o: $$(abspath $$($(1)_DIR)$$(1)) 
 ifeq ($$(suffix $$(1)),.c)
 	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS))
 else ifneq ($$(filter $$(suffix $$(1)),.cc .cpp),)
-	$(CXX) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS)) $(MAKEFILE_LIST)
+	$(CXX) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS))
 endif # .c
 endif # EXE LIB ARC
 endef # CREATE_SOURCE_RULES
