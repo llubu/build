@@ -37,7 +37,7 @@ else
 	ARCH := x86
 endif # $(ARCH_UNAME)
 
-GLOBAL_CFLAGS_COMMON := -fstrict-aliasing -fstack-protector-all -fstrict-overflow
+GLOBAL_CFLAGS_COMMON := $(CFLAGS) -fstrict-aliasing -fstack-protector-all -fstrict-overflow
 GLOBAL_debug_CFLAGS := -Wall -Wextra -g -O0 -fno-omit-frame-pointer
 GLOBAL_release_CFLAGS := -Wall -Wextra -O4 -fomit-frame-pointer
 GLOBAL_CFLAGS := $(GLOBAL_CFLAGS_COMMON) $(GLOBAL_$(CONFIG)_CFLAGS)
@@ -46,7 +46,7 @@ GLOBAL_CFLAGS_LIB := -fPIC -fvisibility=hidden
 GLOBAL_CFLAGS_ARC := -fPIC
 GLOBAL_CFLAGS_EXE := -fPIE
 
-GLOBAL_LDFLAGS_COMMON :=
+GLOBAL_LDFLAGS_COMMON := $(LDFLAGS)
 GLOBAL_debug_LDFLAGS :=
 GLOBAL_release_LDFLAGS :=
 GLOBAL_LDFLAGS := $(GLOBAL_LDFLAGS_COMMON) $(GLOBAL_$(CONFIG)_LDFLAGS)
