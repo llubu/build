@@ -95,6 +95,10 @@ $(1)_HEADER_DIRS += $$($(1)_DIR) $(foreach HEADER_DIR_PROJ,$($(1)_DEPENDS) $($(1
 $(1)_FINAL_CFLAGS := $(GLOBAL_CFLAGS) $(GLOBAL_CFLAGS_$(2)) $$($(1)_CFLAGS)
 $(1)_FINAL_LDFLAGS := $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2)) $$($(1)_LDFLAGS)
 
+ifeq ($(2),LIB)
+$(1)_FINAL_LDFLAGS += -Wl,-soname,$$($(1)_BINARY_FILENAME)
+endif # LIB
+
 $$($(1)_COPY): $$($(1)_BINARY)
 	mkdir -p $(FINAL_OUT_DIR)
 	cp $$($(1)_BINARY) $$($(1)_COPY)
@@ -103,7 +107,7 @@ define $(1)_CREATE_BINARY_RULES
 $$(eval $(call $(1)_BINARY_RULES))
 ifeq ($(2),$(filter EXE LIB,$(2)))
 $$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS)
-	$(CC) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$($(1)_LIBS)
+	$(CC) $$($(1)_FINAL_LDFLAGS) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_LIBS)
 else ifeq ($(2),ARC)
 $$($(1)_BINARY): $$($(1)_OBJECTS)
 	$(AR) $$($(1)_FINAL_LDFLAGS) $$$$@ $$($(1)_OBJECTS)
