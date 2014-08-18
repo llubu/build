@@ -60,6 +60,16 @@ ARC_SUFFIX := .a
 EXE_SUFFIX :=
 DRV_SUFFIX := .ko
 
+python_SUFFIX := .py
+java_SUFFIX := .java
+ruby_SUFFIX := .rb
+csharp_SUFFIX := .cs
+php_SUFFIX := .php
+perl_SUFFIX := .pl
+
+python_CFLAGS := $(shell python-config --cflags)
+python_LDFLAGS := $(shell python-config --ldflags)
+
 FINAL_OUT_DIR := $(CONFIG)-$(ARCH)
 
 define CREATE_RECURSIVE_DEPENDS
@@ -81,11 +91,17 @@ endef # CREATE_MODULE_VARIABLES
 define CREATE_MODULE
 $(1)_TYPE := $(2)
 $(1)_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+$(1)_BINDINGS_SOURCE := $$($(1)_BINDINGS_HEADER:%.h=%_wrap.c)
+$(1)_BINDINGS_OUTPUTS := $(foreach BINDINGS,$$($(1)_BINDINGS),$(1)$($($(1)_BINDINGS)_SUFFIX))
+$(1)_SOURCES += $$($(1)_BINDINGS_SOURCE)
 $(1)_CONFIG_DIR := $$($(1)_DIR)$(CONFIG)-$(ARCH)
 $(1)_OBJ_DIR := $$($(1)_CONFIG_DIR)/obj
 $(1)_OBJ_FILES := $$(addsuffix .o,$$(basename $$(notdir $$($(1)_SOURCES))))
 $(1)_OBJECTS := $$(addprefix $$($(1)_OBJ_DIR)/,$$($(1)_OBJ_FILES))
 $(1)_BINARY_FILENAME := $(addsuffix $$($(2)_SUFFIX),$(1))
+ifneq ($$($(1)_BINDINGS_SOURCE),)
+$(1)_BINARY_FILENAME := $(addprefix _,$$($(1)_BINARY_FILENAME))
+endif # $(1)_BINDINGS_SOURCE
 $(1)_BINARY := $(addprefix $$($(1)_CONFIG_DIR)/,$$($(1)_BINARY_FILENAME))
 $(1)_COPY := $(FINAL_OUT_DIR)/$$($(1)_BINARY_FILENAME)
 
@@ -118,6 +134,9 @@ $(1): $$($(1)_COPY)
 
 $(1)_CLEAN:
 	-rm -f $$($(1)_OBJECTS)
+ifneq ($$($(1)_BINDINGS_SOURCE),)
+	-rm -f $(addprefix $$($(1)_DIR),$$($(1)_BINDINGS_SOURCE)) $(addprefix $$($(1)_DIR),$$($(1)_BINDINGS_OUTPUTS))
+endif # BINDINGS_SOURCE
 	-rm -f $$($(1)_BINARY)
 	-rm -f $(FINAL_OUT_DIR)/$$($(1)_BINARY_FILENAME)
 
@@ -139,6 +158,17 @@ else ifneq ($$(filter $$(suffix $$(1)),.cc .cpp),)
 endif # .c
 endif # EXE LIB ARC
 endef # CREATE_SOURCE_RULES
+
+# Must be called before $(1)_CREATE_SOURCE_RULES
+define $(1)_CREATE_BINDINGS_RULES
+$(1)_FINAL_CFLAGS += $$($$(1)_CFLAGS)
+$(1)_FINAL_LDFLAGS += $$($$(1)_LDFLAGS)
+$$($(1)_DIR)/$(1).$$($$(1)_SUFFIX) $$(abspath $$($(1)_DIR)$$($(1)_BINDINGS_SOURCE)): $(abspath $$($(1)_DIR)$$($(1)_BINDINGS_HEADER))
+	swig -$$(1) -includeall -outdir $$($(1)_DIR) -module $(1) $$(addprefix -I,$$($(1)_HEADER_DIRS)) $$($(1)_DIR)$$($(1)_BINDINGS_HEADER)
+
+$(1)_BINDINGS_COPY := $(FINAL_OUT_DIR)/$(1).$$($$(1)_SUFFIX)
+$$($(1)_BINDINGS_COPY): $$($(1)_DIR)/$(1).$$($$(1)_SUFFIX)
+endef # CREATE_BINDINGS_RULES
 
 MODULES += $(1)
 MODULES_CLEAN += $(1)_CLEAN
@@ -162,6 +192,7 @@ endif # MAKECMDGOALS,test
 
 $(foreach MODULE,$(MODULES),$(eval $(call CREATE_MODULE_VARIABLES,$(MODULE))))
 $(foreach MODULE,$(MODULES),$(eval $(call CREATE_RECURSIVE_DEPENDS,$(MODULE))))
+$(foreach MODULE,$(MODULES),$(foreach BINDINGS,$($(MODULE)_BINDINGS),$(eval $(call $(MODULE)_CREATE_BINDINGS_RULES,$(BINDINGS)))))
 $(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_BINARY_RULES,$(MODULE))))
 $(foreach MODULE,$(MODULES),$(foreach SOURCE,$($(MODULE)_SOURCES),$(eval $(call $(MODULE)_CREATE_SOURCE_RULES,$(SOURCE)))))
 
