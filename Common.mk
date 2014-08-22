@@ -62,6 +62,9 @@ DRV_SUFFIX := .ko
 
 FINAL_OUT_DIR := $(CONFIG)-$(ARCH)
 
+$(FINAL_OUT_DIR):
+	mkdir -p $(FINAL_OUT_DIR)
+
 define CREATE_RECURSIVE_DEPENDS
 $(1)_DEPENDS_LIBS += $(foreach LIB,$$($(1)_DEPENDS),$($($(LIB)_DEPENDS_LIBS)))
 $(1)_DEPENDS_LIBS += $(foreach LIB,$$($(1)_DEPENDS_LINK),$($($(LIB)_DEPENDS_LIBS)))
@@ -100,16 +103,15 @@ $(1)_FINAL_LDFLAGS += -Wl,-soname,$$($(1)_BINARY_FILENAME)
 endif # LIB
 
 $$($(1)_COPY): $$($(1)_BINARY)
-	mkdir -p $(FINAL_OUT_DIR)
 	cp $$($(1)_BINARY) $$($(1)_COPY)
 
 define $(1)_CREATE_BINARY_RULES
 $$(eval $(call $(1)_BINARY_RULES))
 ifeq ($(2),$(filter EXE LIB,$(2)))
-$$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS)
+$$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS) $(FINAL_OUT_DIR)
 	$(CC) $$($(1)_FINAL_LDFLAGS) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_LIBS)
 else ifeq ($(2),ARC)
-$$($(1)_BINARY): $$($(1)_OBJECTS)
+$$($(1)_BINARY): $$($(1)_OBJECTS) $(FINAL_OUT_DIR)
 	$(AR) $$($(1)_FINAL_LDFLAGS) $$$$@ $$($(1)_OBJECTS)
 endif # EXE
 
@@ -128,10 +130,12 @@ endif # EXE
 
 endef # $(1)_CREATE_BINARY_RULES
 
+$$($(1)_OBJ_DIR):
+	mkdir -p $$($(1)_OBJ_DIR)
+
 define $(1)_CREATE_SOURCE_RULES
 ifeq ($(2),$(filter EXE LIB ARC,$(2)))
-$$($(1)_OBJ_DIR)/$$(basename $$(notdir $$(1))).o: $$(abspath $$($(1)_DIR)$$(1)) $$($(1)_DEPENDS_HEADERS) $(MAKEFILE_LIST)
-	mkdir -p $$($(1)_OBJ_DIR)
+$$($(1)_OBJ_DIR)/$$(basename $$(notdir $$(1))).o: $$(abspath $$($(1)_DIR)$$(1)) $$($(1)_DEPENDS_HEADERS) $$($(1)_OBJ_DIR) $(MAKEFILE_LIST)
 ifeq ($$(suffix $$(1)),.c)
 	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS))
 else ifneq ($$(filter $$(suffix $$(1)),.cc .cpp),)
