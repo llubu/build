@@ -108,10 +108,10 @@ $$($(1)_COPY): $$($(1)_BINARY)
 define $(1)_CREATE_BINARY_RULES
 $$(eval $(call $(1)_BINARY_RULES))
 ifeq ($(2),$(filter EXE LIB,$(2)))
-$$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS) $(FINAL_OUT_DIR)
+$$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS) | $(FINAL_OUT_DIR)
 	$(CC) $$($(1)_FINAL_LDFLAGS) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_LIBS)
 else ifeq ($(2),ARC)
-$$($(1)_BINARY): $$($(1)_OBJECTS) $(FINAL_OUT_DIR)
+$$($(1)_BINARY): $$($(1)_OBJECTS) | $(FINAL_OUT_DIR)
 	$(AR) $$($(1)_FINAL_LDFLAGS) $$$$@ $$($(1)_OBJECTS)
 endif # EXE
 
@@ -135,7 +135,7 @@ $$($(1)_OBJ_DIR):
 
 define $(1)_CREATE_SOURCE_RULES
 ifeq ($(2),$(filter EXE LIB ARC,$(2)))
-$$($(1)_OBJ_DIR)/$$(basename $$(notdir $$(1))).o: $$(abspath $$($(1)_DIR)$$(1)) $$($(1)_DEPENDS_HEADERS) $$($(1)_OBJ_DIR) $(MAKEFILE_LIST)
+$$($(1)_OBJ_DIR)/$$(basename $$(notdir $$(1))).o: $$(abspath $$($(1)_DIR)$$(1)) $$($(1)_DEPENDS_HEADERS) $(MAKEFILE_LIST) | $$($(1)_OBJ_DIR)
 ifeq ($$(suffix $$(1)),.c)
 	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS))
 else ifneq ($$(filter $$(suffix $$(1)),.cc .cpp),)
