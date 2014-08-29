@@ -135,7 +135,8 @@ $$($(1)_OBJ_DIR):
 
 define $(1)_CREATE_SOURCE_RULES
 ifeq ($(2),$(filter EXE LIB ARC,$(2)))
-$$($(1)_OBJ_DIR)/$$(basename $$(notdir $$(1))).o: $$(abspath $$($(1)_DIR)$$(1)) $$($(1)_DEPENDS_HEADERS) $(MAKEFILE_LIST) | $$($(1)_OBJ_DIR)
+$$($(1)_OBJ_DIR)/$$(basename $$(notdir $$(1))).o: $$(abspath $$($(1)_DIR)$$(1)) $$($(1)_DEPENDS_HEADERS) \
+	$$(addprefix $$(abspath $$($(1)_DIR))/, $$($(1)_HEADERS)) $(MAKEFILE_LIST) | $$($(1)_OBJ_DIR)
 ifeq ($$(suffix $$(1)),.c)
 	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS))
 else ifneq ($$(filter $$(suffix $$(1)),.cc .cpp),)
@@ -185,5 +186,4 @@ all: $(MODULES)
 clean: $(MODULES_CLEAN)
 
 .DEFAULT_GOAL := all
-
 
