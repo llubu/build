@@ -109,7 +109,7 @@ define $(1)_CREATE_BINARY_RULES
 $$(eval $(call $(1)_BINARY_RULES))
 ifeq ($(2),$(filter EXE LIB,$(2)))
 $$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS) | $(FINAL_OUT_DIR)
-	$(CC) $$($(1)_FINAL_LDFLAGS) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_LIBS)
+	$(CC) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$($(1)_LIBS)
 else ifeq ($(2),ARC)
 $$($(1)_BINARY): $$($(1)_OBJECTS) | $(FINAL_OUT_DIR)
 	$(AR) $$($(1)_FINAL_LDFLAGS) $$$$@ $$($(1)_OBJECTS)
