@@ -23,7 +23,7 @@
 # Default value
 CONFIG := release
 
-CONFIGURATIONS = release debug
+CONFIGURATIONS = release debug coverage
 ifeq ($$(findstring $$(CONFIG),$$(CONFIGURATIONS)),)
 $(error Error building $(CONFIG))
 else
@@ -38,6 +38,7 @@ else
 endif # $(ARCH_UNAME)
 
 GLOBAL_CFLAGS_COMMON := $(CFLAGS) -fstrict-aliasing -fstack-protector-all -fstrict-overflow
+GLOBAL_coverage_CFLAGS := -Wall -Wextra -O0 -fprofile-arcs -ftest-coverage
 GLOBAL_debug_CFLAGS := -Wall -Wextra -g -O0 -fno-omit-frame-pointer
 GLOBAL_release_CFLAGS := -Wall -Wextra -O3 -fomit-frame-pointer
 GLOBAL_CFLAGS := $(GLOBAL_CFLAGS_COMMON) $(GLOBAL_$(CONFIG)_CFLAGS)
@@ -47,6 +48,7 @@ GLOBAL_CFLAGS_ARC := -fPIC
 GLOBAL_CFLAGS_EXE := -fPIE
 
 GLOBAL_LDFLAGS_COMMON := $(LDFLAGS)
+GLOBAL_coverage_LDFLAGS := -lgcov
 GLOBAL_debug_LDFLAGS :=
 GLOBAL_release_LDFLAGS :=
 GLOBAL_LDFLAGS := $(GLOBAL_LDFLAGS_COMMON) $(GLOBAL_$(CONFIG)_LDFLAGS)
@@ -88,6 +90,8 @@ $(1)_CONFIG_DIR := $$($(1)_DIR)$(CONFIG)-$(ARCH)
 $(1)_OBJ_DIR := $$($(1)_CONFIG_DIR)/obj
 $(1)_OBJ_FILES := $$(addsuffix .o,$$(basename $$(notdir $$($(1)_SOURCES))))
 $(1)_OBJECTS := $$(addprefix $$($(1)_OBJ_DIR)/,$$($(1)_OBJ_FILES))
+$(1)_COV_FILES := $$(addsuffix .gcno, $$(basename $$(notdir $$($(1)_SOURCES))))
+$(1)_COVERAGE := $$(addprefix $$($(1)_OBJ_DIR)/,$$($(1)_COV_FILES))
 $(1)_BINARY_FILENAME := $(addsuffix $$($(2)_SUFFIX),$(1))
 $(1)_BINARY := $(addprefix $$($(1)_CONFIG_DIR)/,$$($(1)_BINARY_FILENAME))
 $(1)_COPY := $(FINAL_OUT_DIR)/$$($(1)_BINARY_FILENAME)
@@ -96,7 +100,13 @@ $(1)_DEPENDS_LIB_RULES := $(addsuffix _COPY,$($(1)_DEPENDS)) $(addsuffix _COPY,$
 $(1)_HEADER_DIRS += $$($(1)_DIR) $(foreach HEADER_DIR_PROJ,$($(1)_DEPENDS) $($(1)_DEPENDS_INCLUDE),$$($(HEADER_DIR_PROJ)_DIR))
 
 $(1)_FINAL_CFLAGS := $(GLOBAL_CFLAGS) $(GLOBAL_CFLAGS_$(2)) $$($(1)_CFLAGS)
+
+# since ar can have ONLY ONE operation to execute on GNU ar
+ifeq ($(2), ARC)
+$(1)_FINAL_LDFLAGS := $(GLOBAL_LDFLAGS_$(2))
+else
 $(1)_FINAL_LDFLAGS := $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2)) $$($(1)_LDFLAGS)
+endif
 
 ifeq ($(2),LIB)
 $(1)_FINAL_LDFLAGS += -Wl,-soname,$$($(1)_BINARY_FILENAME)
@@ -119,6 +129,7 @@ endif # EXE
 $(1): $$($(1)_COPY)
 
 $(1)_CLEAN:
+	-rm -f $$($(1)_COVERAGE)
 	-rm -f $$($(1)_OBJECTS)
 	-rm -f $$($(1)_BINARY)
 	-rm -f $(FINAL_OUT_DIR)/$$($(1)_BINARY_FILENAME)
