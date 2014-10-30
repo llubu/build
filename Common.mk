@@ -24,7 +24,7 @@
 CONFIG := release
 
 CONFIGURATIONS = release debug coverage
-ifeq ($$(findstring $$(CONFIG),$$(CONFIGURATIONS)),)
+ifeq ($(findstring $(CONFIG),$(CONFIGURATIONS)),)
 $(error Error building $(CONFIG))
 else
 $(warning Configuration: $(CONFIG))
