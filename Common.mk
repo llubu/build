@@ -37,6 +37,17 @@ else
 	ARCH := x86
 endif # $(ARCH_UNAME)
 
+ifeq ($(SANITIZE),address)
+	CFLAGS += -fsanitize=address
+	LDFLAGS += -fsanitize=address
+	ifeq ($(CC),clang)
+		LDFLAGS += -lasan
+	endif
+else ifeq ($(SANITIZE), thread)
+	CFLAGS += -fsanitize=thread
+	LDFLAGS += -fsanitize=thread -ltsan
+endif
+
 GLOBAL_CFLAGS_COMMON := $(CFLAGS) -fstrict-aliasing -fstack-protector-all -fstrict-overflow
 GLOBAL_coverage_CFLAGS := -Wall -Wextra -O0 -fprofile-arcs -ftest-coverage
 GLOBAL_debug_CFLAGS := -Wall -Wextra -g -O0 -fno-omit-frame-pointer
