@@ -132,7 +132,7 @@ ifeq ($(2),$(filter EXE LIB,$(2)))
 $$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS) | $(FINAL_OUT_DIR)
 	$(CC) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$($(1)_LIBS)
 else ifeq ($(2),ARC)
-$$($(1)_BINARY): $$($(1)_OBJECTS) | $(FINAL_OUT_DIR)
+$$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS) | $(FINAL_OUT_DIR)
 	$(AR) $$($(1)_FINAL_LDFLAGS) $$$$@ $$($(1)_OBJECTS)
 endif # EXE
 
