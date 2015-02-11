@@ -192,6 +192,12 @@ $(foreach MODULE,$(MODULES),$(eval $(call CREATE_RECURSIVE_DEPENDS,$(MODULE))))
 $(foreach MODULE,$(MODULES),$(eval $(call $(MODULE)_CREATE_BINARY_RULES,$(MODULE))))
 $(foreach MODULE,$(MODULES),$(foreach SOURCE,$($(MODULE)_SOURCES),$(eval $(call $(MODULE)_CREATE_SOURCE_RULES,$(SOURCE)))))
 
+
+.PHONY: install
+install:
+	mkdir -p $(INSTALL_PATH)/bin
+	$(foreach MODULE,$(MODULES), install -p -m 755 $($(MODULE)_COPY) $(INSTALL_PATH)/bin/ ;)
+
 .PHONY: test
 test: $(MODULES)
 
