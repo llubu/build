@@ -39,20 +39,28 @@ endif # $(ARCH_UNAME)
 
 ifeq ($(SANITIZE),address)
 	CFLAGS += -fsanitize=address
+	CXXFLAGS += -fsanitize=address
 	LDFLAGS += -fsanitize=address
 	ifeq ($(CC),clang)
 		LDFLAGS += -lasan
 	endif
 else ifeq ($(SANITIZE), thread)
 	CFLAGS += -fsanitize=thread
+	CXXFLAGS += -fsanitize=thread
 	LDFLAGS += -fsanitize=thread -ltsan
 endif
 
 GLOBAL_CFLAGS_COMMON := $(CFLAGS) -fstrict-aliasing -fstack-protector-all -fstrict-overflow
-GLOBAL_coverage_CFLAGS := -Wall -Wextra -O0 -fprofile-arcs -ftest-coverage
-GLOBAL_debug_CFLAGS := -Wall -Wextra -g -O0 -fno-omit-frame-pointer
-GLOBAL_release_CFLAGS := -Wall -Wextra -O3 -fomit-frame-pointer
+GLOBAL_coverage_CFLAGS := -Wall -Wextra -Wshadow -Wmissing-prototypes -Wstrict-prototypes -O0 -fprofile-arcs -ftest-coverage
+GLOBAL_debug_CFLAGS := -Wall -Wextra -Wshadow -Wmissing-prototypes -Wstrict-prototypes -g -O0 -fno-omit-frame-pointer
+GLOBAL_release_CFLAGS := -Wall -Wextra -Wshadow -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer
 GLOBAL_CFLAGS := $(GLOBAL_CFLAGS_COMMON) $(GLOBAL_$(CONFIG)_CFLAGS)
+
+GLOBAL_CXXFLAGS_COMMON := $(CXXFLAGS) -fstrict-aliasing -fstack-protector-all -fstrict-overflow
+GLOBAL_coverage_CXXFLAGS := -Wall -Wextra -Wshadow -O0 -fprofile-arcs -ftest-coverage
+GLOBAL_debug_CXXFLAGS := -Wall -Wextra -Wshadow -g -O0 -fno-omit-frame-pointer
+GLOBAL_release_CXXFLAGS := -Wall -Wextra -Wshadow -O3 -fomit-frame-pointer
+GLOBAL_CXXFLAGS := $(GLOBAL_CXXFLAGS_COMMON) $(GLOBAL_$(CONFIG)_CXXFLAGS)
 
 GLOBAL_CFLAGS_LIB := -fPIC -fvisibility=hidden
 GLOBAL_CFLAGS_ARC := -fPIC
@@ -111,6 +119,7 @@ $(1)_DEPENDS_LIB_RULES := $(addsuffix _COPY,$($(1)_DEPENDS)) $(addsuffix _COPY,$
 $(1)_HEADER_DIRS += $$($(1)_DIR) $(foreach HEADER_DIR_PROJ,$($(1)_DEPENDS) $($(1)_DEPENDS_INCLUDE),$$($(HEADER_DIR_PROJ)_DIR))
 
 $(1)_FINAL_CFLAGS := $(GLOBAL_CFLAGS) $(GLOBAL_CFLAGS_$(2)) $$($(1)_CFLAGS)
+$(1)_FINAL_CXXFLAGS := $(GLOBAL_CXXFLAGS) $(GLOBAL_CFLAGS_$(2)) $$($(1)_CXXFLAGS)
 
 # since ar can have ONLY ONE operation to execute on GNU ar
 ifeq ($(2), ARC)
@@ -162,7 +171,7 @@ $$($(1)_OBJ_DIR)/$$(basename $$(notdir $$(1))).o: $$(abspath $$($(1)_DIR)$$(1)) 
 ifeq ($$(suffix $$(1)),.c)
 	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS))
 else ifneq ($$(filter $$(suffix $$(1)),.cc .cpp),)
-	$(CXX) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS))
+	$(CXX) -c $$$$< -o $$$$@ $$($(1)_FINAL_CXXFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS))
 endif # .c
 endif # EXE LIB ARC
 endef # CREATE_SOURCE_RULES
