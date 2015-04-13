@@ -46,7 +46,7 @@ ifeq ($(SANITIZE),address)
 	ifeq ($(CC),clang)
 		LDFLAGS += -lasan
 	endif
-else ifeq ($(SANITIZE), thread)
+else ifeq ($(SANITIZE),thread)
 	CFLAGS += -fsanitize=thread
 	CXXFLAGS += -fsanitize=thread
 	LDFLAGS += -fsanitize=thread -ltsan
@@ -110,7 +110,7 @@ $(1)_CONFIG_DIR := $$($(1)_DIR)$(CONFIG)-$(ARCH)
 $(1)_OBJ_DIR := $$($(1)_CONFIG_DIR)/obj
 $(1)_OBJ_FILES := $$(addsuffix .o,$$(basename $$(notdir $$($(1)_SOURCES))))
 $(1)_OBJECTS := $$(addprefix $$($(1)_OBJ_DIR)/,$$($(1)_OBJ_FILES))
-$(1)_COV_FILES := $$(addsuffix .gcno, $$(basename $$(notdir $$($(1)_SOURCES))))
+$(1)_COV_FILES := $$(addsuffix .gcno,$$(basename $$(notdir $$($(1)_SOURCES))))
 $(1)_COVERAGE := $$(addprefix $$($(1)_OBJ_DIR)/,$$($(1)_COV_FILES))
 $(1)_BINARY_FILENAME := $(addsuffix $$($(2)_SUFFIX),$(1))
 $(1)_BINARY := $(addprefix $$($(1)_CONFIG_DIR)/,$$($(1)_BINARY_FILENAME))
@@ -123,7 +123,7 @@ $(1)_FINAL_CFLAGS := $(GLOBAL_CFLAGS) $(GLOBAL_CFLAGS_$(2)) $$($(1)_CFLAGS)
 $(1)_FINAL_CXXFLAGS := $(GLOBAL_CXXFLAGS) $(GLOBAL_CFLAGS_$(2)) $$($(1)_CXXFLAGS)
 
 # since ar can have ONLY ONE operation to execute on GNU ar
-ifeq ($(2), ARC)
+ifeq ($(2),ARC)
 $(1)_FINAL_LDFLAGS := $(GLOBAL_LDFLAGS_$(2))
 else
 $(1)_FINAL_LDFLAGS := $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2)) $$($(1)_LDFLAGS)
@@ -168,7 +168,7 @@ $$($(1)_OBJ_DIR):
 define $(1)_CREATE_SOURCE_RULES
 ifeq ($(2),$(filter EXE LIB ARC,$(2)))
 $$($(1)_OBJ_DIR)/$$(basename $$(notdir $$(1))).o: $$(abspath $$($(1)_DIR)$$(1)) $$($(1)_DEPENDS_HEADERS) \
-	$$(addprefix $$(abspath $$($(1)_DIR))/, $$($(1)_HEADERS)) $(MAKEFILE_LIST) | $$($(1)_OBJ_DIR)
+	$$(addprefix $$(abspath $$($(1)_DIR))/,$$($(1)_HEADERS)) $(MAKEFILE_LIST) | $$($(1)_OBJ_DIR)
 ifeq ($$(suffix $$(1)),.c)
 	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(call UNIQUE,$$(addprefix -I,$$($(1)_HEADER_DIRS)))
 else ifneq ($$(filter $$(suffix $$(1)),.cc .cpp),)
@@ -206,7 +206,7 @@ $(foreach MODULE,$(MODULES),$(foreach SOURCE,$($(MODULE)_SOURCES),$(eval $(call 
 .PHONY: install
 install:
 	mkdir -p $(INSTALL_PATH)/bin
-	$(foreach MODULE,$(MODULES), install -p -m 755 $($(MODULE)_COPY) $(INSTALL_PATH)/bin/ ;)
+	$(foreach MODULE,$(MODULES),install -p -m 755 $($(MODULE)_COPY) $(INSTALL_PATH)/bin/ ;)
 
 .PHONY: test
 test: $(MODULES)
