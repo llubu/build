@@ -37,6 +37,8 @@ else
 	ARCH := x86
 endif # $(ARCH_UNAME)
 
+UNIQUE = $(if $(1),$(firstword $(1)) $(call UNIQUE,$(filter-out $(firstword $(1)),$(1))))
+
 ifeq ($(SANITIZE),address)
 	CFLAGS += -fsanitize=address
 	CXXFLAGS += -fsanitize=address
@@ -93,7 +95,6 @@ $(1)_DEPENDS_LIBS := $(sort $$($(1)_DEPENDS_LIBS))
 
 $(1)_LIBS += $(foreach LIB,$($(1)_DEPENDS),$($(LIB)_LIBS))
 $(1)_LIBS += $(foreach LIB,$($(1)_DEPENDS_LINK),$($(LIB)_LIBS))
-$(1)_LIBS := $(sort $$($(1)_LIBS))
 endef # CREATE_RECURSIVE_DEPENDS
 
 define CREATE_MODULE_VARIABLES
@@ -139,7 +140,7 @@ define $(1)_CREATE_BINARY_RULES
 $$(eval $(call $(1)_BINARY_RULES))
 ifeq ($(2),$(filter EXE LIB,$(2)))
 $$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS) | $(FINAL_OUT_DIR)
-	$(CC) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$($(1)_LIBS)
+	$(CC) -o $$$$@ $$($(1)_OBJECTS) $$($(1)_FINAL_LDFLAGS) $$(call UNIQUE,$$($(1)_LIBS))
 else ifeq ($(2),ARC)
 $$($(1)_BINARY): $$($(1)_OBJECTS) $$($(1)_DEPENDS_LIBS) | $(FINAL_OUT_DIR)
 	$(AR) $$($(1)_FINAL_LDFLAGS) $$$$@ $$($(1)_OBJECTS)
@@ -169,9 +170,9 @@ ifeq ($(2),$(filter EXE LIB ARC,$(2)))
 $$($(1)_OBJ_DIR)/$$(basename $$(notdir $$(1))).o: $$(abspath $$($(1)_DIR)$$(1)) $$($(1)_DEPENDS_HEADERS) \
 	$$(addprefix $$(abspath $$($(1)_DIR))/, $$($(1)_HEADERS)) $(MAKEFILE_LIST) | $$($(1)_OBJ_DIR)
 ifeq ($$(suffix $$(1)),.c)
-	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS))
+	$(CC) -c $$$$< -o $$$$@ $$($(1)_FINAL_CFLAGS) $$(call UNIQUE,$$(addprefix -I,$$($(1)_HEADER_DIRS)))
 else ifneq ($$(filter $$(suffix $$(1)),.cc .cpp),)
-	$(CXX) -c $$$$< -o $$$$@ $$($(1)_FINAL_CXXFLAGS) $$(addprefix -I,$$($(1)_HEADER_DIRS))
+	$(CXX) -c $$$$< -o $$$$@ $$($(1)_FINAL_CXXFLAGS) $$(call UNIQUE,$$(addprefix -I,$$($(1)_HEADER_DIRS)))
 endif # .c
 endif # EXE LIB ARC
 endef # CREATE_SOURCE_RULES
