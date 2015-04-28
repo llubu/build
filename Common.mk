@@ -74,11 +74,27 @@ GLOBAL_debug_LDFLAGS :=
 GLOBAL_release_LDFLAGS :=
 GLOBAL_LDFLAGS := $(GLOBAL_LDFLAGS_COMMON) $(GLOBAL_$(CONFIG)_LDFLAGS)
 
-GLOBAL_LDFLAGS_LIB := -shared -Wl,-rpath,\$$$$$$$$ORIGIN
+PLATFORM := $(shell uname -s)
+ifeq ($(PLATFORM),Linux)
+	GLOBAL_LDFLAGS_LIB := -shared
+else
+	ifeq ($(PLATFORM),Darwin)
+		GLOBAL_LDFLAGS_LIB := -dynamiclib
+	endif # Mac
+endif # Linux
+
+GLOBAL_LDFLAGS_LIB += -Wl,-rpath,\$$$$$$$$ORIGIN
 GLOBAL_LDFLAGS_ARC := -r -c
 GLOBAL_LDFLAGS_EXE := -Wl,-rpath,\$$$$$$$$ORIGIN -pie
 
-LIB_SUFFIX := .so
+ifeq ($(PLATFORM),Linux)
+	LIB_SUFFIX := .so
+else
+	ifeq ($(PLATFORM),Darwin)
+		LIB_SUFFIX := .dylib
+	endif # Mac
+endif # Linux
+
 ARC_SUFFIX := .a
 EXE_SUFFIX :=
 DRV_SUFFIX := .ko
@@ -130,7 +146,9 @@ $(1)_FINAL_LDFLAGS := $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2)) $$($(1)_LDFLAGS)
 endif
 
 ifeq ($(2),LIB)
+ifeq ($(OS),Linux)
 $(1)_FINAL_LDFLAGS += -Wl,-soname,$$($(1)_BINARY_FILENAME)
+endif # Linux
 endif # LIB
 
 $$($(1)_COPY): $$($(1)_BINARY)
