@@ -84,11 +84,10 @@ GLOBAL_debug_LDFLAGS :=
 GLOBAL_release_LDFLAGS :=
 GLOBAL_LDFLAGS := $(GLOBAL_LDFLAGS_COMMON) $(GLOBAL_$(CONFIG)_LDFLAGS)
 
-PLATFORM := $(shell uname -s)
-ifeq ($(PLATFORM),Linux)
+ifeq ($(PLATFORM),linux)
 	GLOBAL_LDFLAGS_LIB := -shared
 else
-	ifeq ($(PLATFORM),Darwin)
+	ifeq ($(PLATFORM),mac)
 		GLOBAL_LDFLAGS_LIB := -dynamiclib
 	endif # Mac
 endif # Linux
@@ -97,10 +96,10 @@ GLOBAL_LDFLAGS_LIB += -Wl,-rpath,\$$$$$$$$ORIGIN
 GLOBAL_LDFLAGS_ARC := -r -c
 GLOBAL_LDFLAGS_EXE := -Wl,-rpath,\$$$$$$$$ORIGIN -pie
 
-ifeq ($(PLATFORM),Linux)
+ifeq ($(PLATFORM),linux)
 	LIB_SUFFIX := .so
 else
-	ifeq ($(PLATFORM),Darwin)
+	ifeq ($(PLATFORM),mac)
 		LIB_SUFFIX := .dylib
 	endif # Mac
 endif # Linux
