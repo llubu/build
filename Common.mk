@@ -26,9 +26,19 @@ CONFIG := release
 CONFIGURATIONS = release debug coverage
 ifeq ($(findstring $(CONFIG),$(CONFIGURATIONS)),)
 $(error Error building $(CONFIG))
-else
-$(warning Configuration: $(CONFIG))
 endif
+
+ifeq ($(shell uname -s),Linux)
+	PLATFORM := linux
+else
+	ifeq ($(shell uname -s),Windows_NT)
+		PLATFORM := windows
+	else
+		ifeq ($(shell uname -s),Darwin)
+			PLATFORM := mac
+		endif
+	endif
+endif # PLATFORM
 
 ARCH_UNAME = $(shell uname -m)
 ifeq ($(ARCH_UNAME),x86_64)
