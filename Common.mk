@@ -151,11 +151,11 @@ $(1)_FINAL_CXXFLAGS := $(GLOBAL_CXXFLAGS) $(GLOBAL_CFLAGS_$(2)) $$($(1)_CXXFLAGS
 ifeq ($(2),ARC)
 $(1)_FINAL_LDFLAGS := $(GLOBAL_LDFLAGS_$(2))
 else
-$(1)_FINAL_LDFLAGS := $(GLOBAL_LDFLAGS) $(GLOBAL_LDFLAGS_$(2)) $$($(1)_LDFLAGS)
+$(1)_FINAL_LDFLAGS := $(GLOBAL_LDFLAGS_$(2)) $(GLOBAL_LDFLAGS) $$($(1)_LDFLAGS)
 endif
 
 ifeq ($(2),LIB)
-ifeq ($(OS),Linux)
+ifeq ($(PLATFORM),linux)
 $(1)_FINAL_LDFLAGS += -Wl,-soname,$$($(1)_BINARY_FILENAME)
 endif # Linux
 endif # LIB
