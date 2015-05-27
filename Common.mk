@@ -53,9 +53,7 @@ ifeq ($(SANITIZE),address)
 	CFLAGS += -fsanitize=address
 	CXXFLAGS += -fsanitize=address
 	LDFLAGS += -fsanitize=address
-	ifeq ($(CC),clang)
-		LDFLAGS += -lasan
-	endif
+	LDFLAGS += -lasan
 else ifeq ($(SANITIZE),thread)
 	CFLAGS += -fsanitize=thread
 	CXXFLAGS += -fsanitize=thread
