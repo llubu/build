@@ -156,7 +156,7 @@ endif
 
 ifeq ($(2),LIB)
 ifeq ($(PLATFORM),linux)
-$(1)_FINAL_LDFLAGS += -Wl,-soname,$$($(1)_BINARY_FILENAME)
+$(1)_FINAL_LDFLAGS += -Wl,-soname,$$($(1)_BINARY_FILENAME) -Wl,--no-undefined
 endif # Linux
 endif # LIB
 
