@@ -77,7 +77,7 @@ GLOBAL_CFLAGS_ARC := -fPIC
 GLOBAL_CFLAGS_EXE := -fPIE
 
 GLOBAL_LDFLAGS_COMMON := $(LDFLAGS)
-GLOBAL_coverage_LDFLAGS := -lgcov
+GLOBAL_coverage_LDFLAGS :=
 GLOBAL_debug_LDFLAGS :=
 GLOBAL_release_LDFLAGS :=
 GLOBAL_LDFLAGS := $(GLOBAL_LDFLAGS_COMMON) $(GLOBAL_$(CONFIG)_LDFLAGS)
@@ -118,6 +118,9 @@ $(1)_DEPENDS_LIBS := $(sort $$($(1)_DEPENDS_LIBS))
 
 $(1)_LIBS += $(foreach LIB,$($(1)_DEPENDS),$($(LIB)_LIBS))
 $(1)_LIBS += $(foreach LIB,$($(1)_DEPENDS_LINK),$($(LIB)_LIBS))
+ifeq ($(CONFIG),coverage)
+	$(1)_LIBS += -lgcov
+endif
 endef # CREATE_RECURSIVE_DEPENDS
 
 define CREATE_MODULE_VARIABLES
