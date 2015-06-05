@@ -58,6 +58,10 @@ else ifeq ($(SANITIZE),thread)
 	CFLAGS += -fsanitize=thread
 	CXXFLAGS += -fsanitize=thread
 	LDFLAGS += -fsanitize=thread -ltsan
+else ifeq ($(SANITIZE),ubsan)
+	CFLAGS += -fsanitize=undefined
+	CXXFLAGS += -fsanitize=undefined
+	LDFLAGS += -fsanitize=undefined -lubsan
 endif
 
 GLOBAL_CFLAGS_COMMON := $(CFLAGS) -fstrict-aliasing -fstack-protector-all -fstrict-overflow
