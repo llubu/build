@@ -64,13 +64,13 @@ else ifeq ($(SANITIZE),ubsan)
 	LDFLAGS += -fsanitize=undefined -lubsan
 endif
 
-GLOBAL_CFLAGS_COMMON := $(CFLAGS) -fstrict-aliasing -fstack-protector-all -fstrict-overflow
+GLOBAL_CFLAGS_COMMON := $(CFLAGS) -fstrict-aliasing -fstack-protector -fstrict-overflow
 GLOBAL_coverage_CFLAGS := -Wall -Wextra -Wshadow -Wmissing-prototypes -Wstrict-prototypes -O0 -fprofile-arcs -ftest-coverage
 GLOBAL_debug_CFLAGS := -Wall -Wextra -Wshadow -Wmissing-prototypes -Wstrict-prototypes -g -O0 -fno-omit-frame-pointer
 GLOBAL_release_CFLAGS := -Wall -Wextra -Wshadow -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer
 GLOBAL_CFLAGS := $(GLOBAL_CFLAGS_COMMON) $(GLOBAL_$(CONFIG)_CFLAGS)
 
-GLOBAL_CXXFLAGS_COMMON := $(CXXFLAGS) -fstrict-aliasing -fstack-protector-all -fstrict-overflow
+GLOBAL_CXXFLAGS_COMMON := $(CXXFLAGS) -fstrict-aliasing -fstack-protector -fstrict-overflow
 GLOBAL_coverage_CXXFLAGS := -Wall -Wextra -Wshadow -O0 -fprofile-arcs -ftest-coverage
 GLOBAL_debug_CXXFLAGS := -Wall -Wextra -Wshadow -g -O0 -fno-omit-frame-pointer
 GLOBAL_release_CXXFLAGS := -Wall -Wextra -Wshadow -O3 -fomit-frame-pointer
