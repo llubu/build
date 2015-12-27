@@ -58,7 +58,7 @@ else ifeq ($(SANITIZE),thread)
 	CFLAGS += -fsanitize=thread
 	CXXFLAGS += -fsanitize=thread
 	LDFLAGS += -fsanitize=thread -ltsan
-else ifeq ($(SANITIZE),ubsan)
+else ifeq ($(SANITIZE),undefined)
 	CFLAGS += -fsanitize=undefined
 	CXXFLAGS += -fsanitize=undefined
 	LDFLAGS += -fsanitize=undefined -lubsan
