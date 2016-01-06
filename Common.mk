@@ -62,6 +62,10 @@ else ifeq ($(SANITIZE),undefined)
 	CFLAGS += -fsanitize=undefined
 	CXXFLAGS += -fsanitize=undefined
 	LDFLAGS += -fsanitize=undefined -lubsan
+else ifeq ($(SANITIZE),memory)
+	CFLAGS += -fsanitize=memory
+	CXXFLAGS += -fsanitize=memory
+	LDFLAGS += -fsanitize=memory
 endif
 
 GLOBAL_CFLAGS_COMMON := $(CFLAGS) -fstrict-aliasing -fstack-protector -fstrict-overflow
@@ -166,7 +170,10 @@ endif
 
 ifeq ($(2),LIB)
 ifeq ($(PLATFORM),linux)
-$(1)_FINAL_LDFLAGS += -Wl,-soname,$$($(1)_BINARY_FILENAME) -Wl,--no-undefined
+$(1)_FINAL_LDFLAGS += -Wl,-soname,$$($(1)_BINARY_FILENAME)
+ifeq ($(SANITIZE),)
+$(1)_FINAL_LDFLAGS += -Wl,--no-undefined
+endif # SANITIZE
 endif # Linux
 endif # LIB
 
