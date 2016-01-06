@@ -133,6 +133,11 @@ $(1)_LIBS += $$($(1)_DEPENDS_LIBS)
 $(1)_DEPENDS_HEADERS := $(foreach HEADER_RULE,$($(1)_DEPENDS) $($(1)_DEPENDS_INCLUDE),$(foreach HEADER,$($(HEADER_RULE)_HEADERS),$($(HEADER_RULE)_DIR)/$(HEADER)))
 endef # CREATE_MODULE_VARIABLES
 
+define COPY_FILES
+COPY_FILE_DIRS += $(INSTALL_PATH)/$(1)
+FILES_TO_COPY += $(foreach CP_FILE,$($(1)_FILES_TO_COPY),$(addprefix $(1)/,$(CP_FILE)))
+endef  # COPY_FILES
+
 define CREATE_MODULE
 $(1)_TYPE := $(2)
 $(1)_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
@@ -239,6 +244,8 @@ $(foreach MODULE,$(MODULES),$(foreach SOURCE,$($(MODULE)_SOURCES),$(eval $(call 
 install:
 	mkdir -p $(INSTALL_PATH)/bin
 	$(foreach MODULE,$(MODULES),install -p -m 755 $($(MODULE)_COPY) $(INSTALL_PATH)/bin/ ;)
+	mkdir -p $(COPY_FILE_DIRS)
+	$(foreach CP_FILE,$(FILES_TO_COPY),install -p -m 644 $(CP_FILE) $(INSTALL_PATH)/$(dir $(CP_FILE)) ;)
 
 .PHONY: test
 test: $(MODULES)
