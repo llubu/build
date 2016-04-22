@@ -201,7 +201,7 @@ $(1)_CLEAN:
 
 $(1)_RUN: $$($(1)_COPY)
 ifeq ($(2),EXE)
-	$$($(1)_COPY)
+	$$($(1)_RUN_TEST_ENV) $$($(1)_COPY) $$($(1)_RUN_TEST_ARGS)
 endif # EXE
 
 endef # $(1)_CREATE_BINARY_RULES
