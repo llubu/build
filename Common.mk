@@ -59,6 +59,7 @@ ifeq ($(findstring address,$(SANITIZE)),address)
 	CXXFLAGS += -fsanitize=address
 	LDFLAGS += -fsanitize=address
 	LDFLAGS += -lasan
+endif # address
 ifeq ($(findstring undefined,$(SANITIZE)),undefined)
 	CFLAGS += -fsanitize=undefined -fno-sanitize-recover
 	CXXFLAGS += -fsanitize=undefined -fno-sanitize-recover
@@ -68,7 +69,6 @@ else ifeq ($(SANITIZE)),memory)
 	CXXFLAGS += -fsanitize=memory
 	LDFLAGS += -fsanitize=memory
 endif # undefined
-endif # memory
 endif # thread
 
 
