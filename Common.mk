@@ -49,24 +49,28 @@ endif # $(ARCH_UNAME)
 
 UNIQUE = $(if $(1),$(firstword $(1)) $(call UNIQUE,$(filter-out $(firstword $(1)),$(1))))
 
-ifeq ($(SANITIZE),address)
+ifeq ($(SANITIZE),thread)
+	CFLAGS += -fsanitize=thread
+	CXXFLAGS += -fsanitize=thread
+	LDFLAGS += -fsanitize=thread -ltsan
+else
+ifeq ($(findstring address,$(SANITIZE)),address)
 	CFLAGS += -fsanitize=address
 	CXXFLAGS += -fsanitize=address
 	LDFLAGS += -fsanitize=address
 	LDFLAGS += -lasan
-else ifeq ($(SANITIZE),thread)
-	CFLAGS += -fsanitize=thread
-	CXXFLAGS += -fsanitize=thread
-	LDFLAGS += -fsanitize=thread -ltsan
-else ifeq ($(SANITIZE),undefined)
+ifeq ($(findstring undefined,$(SANITIZE)),undefined)
 	CFLAGS += -fsanitize=undefined -fno-sanitize-recover
 	CXXFLAGS += -fsanitize=undefined -fno-sanitize-recover
 	LDFLAGS += -fsanitize=undefined -lubsan
-else ifeq ($(SANITIZE),memory)
+else ifeq ($(SANITIZE)),memory)
 	CFLAGS += -fsanitize=memory
 	CXXFLAGS += -fsanitize=memory
 	LDFLAGS += -fsanitize=memory
-endif
+endif # undefined
+endif # memory
+endif # thread
+
 
 GLOBAL_CFLAGS_COMMON := $(CFLAGS) -fstrict-aliasing -fstack-protector -fstrict-overflow
 GLOBAL_coverage_CFLAGS := -Wall -Wextra -Wshadow -Wmissing-prototypes -Wstrict-prototypes -O0 -fprofile-arcs -ftest-coverage
